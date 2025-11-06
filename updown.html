@@ -1,1 +1,350 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>업다운 게임</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        h1 {
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        .difficulty-selector {
+            margin: 20px 0;
+        }
+        .difficulty-btn {
+            padding: 10px 20px;
+            margin: 5px;
+            font-size: 14px;
+            border: 2px solid white;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .difficulty-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        .difficulty-btn.active {
+            background: white;
+            color: #667eea;
+            font-weight: bold;
+        }
+        .game-info {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            font-size: 16px;
+        }
+        .info-box {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 10px;
+        }
+        input {
+            padding: 15px;
+            font-size: 18px;
+            border: none;
+            border-radius: 10px;
+            width: 200px;
+            text-align: center;
+        }
+        input:focus {
+            outline: 3px solid white;
+        }
+        button {
+            padding: 15px 30px;
+            font-size: 18px;
+            margin-left: 10px;
+            border: none;
+            border-radius: 10px;
+            background: white;
+            color: #667eea;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        #feedback {
+            margin-top: 20px;
+            font-size: 20px;
+            font-weight: bold;
+            min-height: 30px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s;
+        }
+        .feedback-up {
+            color: #ff6b6b;
+        }
+        .feedback-down {
+            color: #4ecdc4;
+        }
+        .feedback-correct {
+            color: #95e1d3;
+            font-size: 24px;
+        }
+        .feedback-error {
+            color: #ffd93d;
+        }
+        #history {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            min-height: 50px;
+        }
+        .history-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .history-item {
+            display: inline-block;
+            margin: 5px;
+            padding: 5px 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+        }
+        #restartBtn {
+            margin-top: 20px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 업다운 게임 🎮</h1>
+        
+        <div class="difficulty-selector">
+            <p>난이도를 선택하세요:</p>
+            <button class="difficulty-btn active" onclick="setDifficulty('easy')">쉬움 (1-50)</button>
+            <button class="difficulty-btn" onclick="setDifficulty('normal')">보통 (1-100)</button>
+            <button class="difficulty-btn" onclick="setDifficulty('hard')">어려움 (1-200)</button>
+        </div>
 
+        <div class="game-info">
+            <div class="info-box">
+                <div>최대 시도: <span id="maxAttempts">5</span>회</div>
+            </div>
+            <div class="info-box">
+                <div>남은 기회: <span id="remainingAttempts">5</span>회</div>
+            </div>
+            <div class="info-box">
+                <div>범위: <span id="rangeDisplay">1-100</span></div>
+            </div>
+        </div>
+
+        <p id="instruction">숫자를 맞춰보세요!</p>
+        
+        <div>
+            <input type="number" id="guessInput" placeholder="숫자를 입력하세요" min="1" max="100" />
+            <button id="submitBtn" onclick="checkGuess()">제출</button>
+        </div>
+        
+        <p id="feedback"></p>
+        
+        <button id="restartBtn" onclick="restartGame()">🔄 다시 시작</button>
+
+        <div id="history">
+            <div class="history-title">📝 시도 기록</div>
+            <div id="historyList">시작하려면 숫자를 입력하세요!</div>
+        </div>
+    </div>
+
+    <script>
+        let targetNumber;
+        let attempts = 0;
+        let maxAttempts = 5;
+        let gameActive = true;
+        let guessHistory = [];
+        let currentDifficulty = 'normal';
+        let rangeMin = 1;
+        let rangeMax = 100;
+
+        // 게임 초기화
+        function initGame() {
+            targetNumber = Math.floor(Math.random() * (rangeMax - rangeMin + 1)) + rangeMin;
+            attempts = 0;
+            gameActive = true;
+            guessHistory = [];
+            updateDisplay();
+            document.getElementById('guessInput').value = '';
+            document.getElementById('guessInput').disabled = false;
+            document.getElementById('submitBtn').disabled = false;
+            document.getElementById('feedback').textContent = '';
+            document.getElementById('feedback').className = '';
+            document.getElementById('historyList').textContent = '시작하려면 숫자를 입력하세요!';
+            document.getElementById('restartBtn').style.display = 'none';
+            document.getElementById('guessInput').focus();
+        }
+
+        // 난이도 설정
+        function setDifficulty(difficulty) {
+            currentDifficulty = difficulty;
+            
+            // 난이도별 설정
+            if (difficulty === 'easy') {
+                rangeMin = 1;
+                rangeMax = 50;
+                maxAttempts = 5;
+            } else if (difficulty === 'normal') {
+                rangeMin = 1;
+                rangeMax = 100;
+                maxAttempts = 7;
+            } else if (difficulty === 'hard') {
+                rangeMin = 1;
+                rangeMax = 200;
+                maxAttempts = 10;
+            }
+
+            // 버튼 활성화 표시
+            document.querySelectorAll('.difficulty-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // 입력 필드 범위 업데이트
+            document.getElementById('guessInput').min = rangeMin;
+            document.getElementById('guessInput').max = rangeMax;
+            document.getElementById('rangeDisplay').textContent = `${rangeMin}-${rangeMax}`;
+            
+            initGame();
+        }
+
+        // 화면 업데이트
+        function updateDisplay() {
+            document.getElementById('maxAttempts').textContent = maxAttempts;
+            document.getElementById('remainingAttempts').textContent = maxAttempts - attempts;
+        }
+
+        // Enter 키 이벤트
+        document.getElementById('guessInput').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                checkGuess();
+            }
+        });
+
+        // 추측 확인
+        function checkGuess() {
+            if (!gameActive) return;
+
+            const input = document.getElementById('guessInput');
+            const userGuess = parseInt(input.value);
+            const feedbackElement = document.getElementById('feedback');
+
+            // 입력 유효성 검사
+            if (isNaN(userGuess) || input.value === '') {
+                feedbackElement.textContent = '⚠️ 숫자를 입력해주세요!';
+                feedbackElement.className = 'feedback-error';
+                return;
+            }
+
+            if (userGuess < rangeMin || userGuess > rangeMax) {
+                feedbackElement.textContent = `⚠️ ${rangeMin}부터 ${rangeMax} 사이의 숫자를 입력해주세요!`;
+                feedbackElement.className = 'feedback-error';
+                return;
+            }
+
+            // 중복 확인
+            if (guessHistory.includes(userGuess)) {
+                feedbackElement.textContent = '⚠️ 이미 시도한 숫자입니다!';
+                feedbackElement.className = 'feedback-error';
+                return;
+            }
+
+            attempts++;
+            guessHistory.push(userGuess);
+            updateDisplay();
+            updateHistory();
+
+            // 입력 필드 초기화
+            input.value = '';
+
+            let feedback = '';
+            let feedbackClass = '';
+
+            if (userGuess < targetNumber) {
+                feedback = `⬆️ 업! 더 큰 숫자입니다. (${userGuess})`;
+                feedbackClass = 'feedback-up';
+            } else if (userGuess > targetNumber) {
+                feedback = `⬇️ 다운! 더 작은 숫자입니다. (${userGuess})`;
+                feedbackClass = 'feedback-down';
+            } else {
+                feedback = `🎉 정답입니다! 시도 횟수: ${attempts}회 🎉`;
+                feedbackClass = 'feedback-correct';
+                feedbackElement.textContent = feedback;
+                feedbackElement.className = feedbackClass;
+                endGame(true);
+                return;
+            }
+
+            // 기회 소진 확인
+            if (attempts >= maxAttempts) {
+                feedback = `😢 게임 오버! 정답은 ${targetNumber}였습니다.`;
+                feedbackClass = 'feedback-error';
+            }
+
+            feedbackElement.textContent = feedback;
+            feedbackElement.className = feedbackClass;
+            
+            if (attempts >= maxAttempts) {
+                endGame(false);
+            }
+        }
+
+        // 게임 종료
+        function endGame(won) {
+            gameActive = false;
+            document.getElementById('guessInput').disabled = true;
+            document.getElementById('submitBtn').disabled = true;
+            document.getElementById('restartBtn').style.display = 'inline-block';
+        }
+
+        // 게임 재시작
+        function restartGame() {
+            initGame();
+        }
+
+        // 히스토리 업데이트
+        function updateHistory() {
+            const historyList = document.getElementById('historyList');
+            if (guessHistory.length === 0) {
+                historyList.textContent = '시작하려면 숫자를 입력하세요!';
+            } else {
+                historyList.innerHTML = guessHistory.map((num, index) => 
+                    `<span class="history-item">${index + 1}. ${num}</span>`
+                ).join('');
+            }
+        }
+
+        // 게임 시작
+        initGame();
+    </script>
+    </div>
+</body>
+</html>
