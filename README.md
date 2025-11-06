@@ -1,2 +1,17 @@
-# updown-game
-Stylish UpDown game: guess the number, challenge yourself or friends! Features multiple difficulty levels, smart UI, and attempt history — all in one HTML file.
+# 업다운 게임
+
+세련된 웹 기반 업다운 게임입니다. 제한된 횟수 안에 숫자를 맞춰보세요!  
+여러 난이도 선택, 애니메이션 피드백, 시도 기록 기능이 포함되어 있으며, 한 개의 HTML 파일로 바로 실행 가능합니다.
+
+## 주요 기능
+- 쉬움/보통/어려움 난이도 선택
+- 아름답고 반응형 UI (모바일/PC 호환)
+- 시도 기록 표시
+- 직관적 피드백 (업/다운/정답/오류)
+- 별도의 설치 없이 단일 HTML 파일로 실행
+
+## 사용 방법
+1. 저장소를 다운로드 또는 클론합니다.
+2. `index.html` 파일을 웹 브라우저에서 엽니다.
+3. 난이도를 선택하고 숫자를 추측해보세요!
+[여기 클릭해서 실행하기](https://mahyun-dev.github.io/updown-game/updown.html)
